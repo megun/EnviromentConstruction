@@ -1,0 +1,8 @@
+---
+
+- import_tasks: tasks/install.yml
+- import_tasks: tasks/configure.yml
+- import_tasks: tasks/nginx_configure.yml
+  when: flunet_nginx is defined
+- import_tasks: tasks/syslog_configure.yml
+  when: flunet_syslog is defined

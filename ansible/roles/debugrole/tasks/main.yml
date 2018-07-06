@@ -1,0 +1,2 @@
+  - name: Magic for Facts | hostvars
+    debug: var=mariadb_root_password

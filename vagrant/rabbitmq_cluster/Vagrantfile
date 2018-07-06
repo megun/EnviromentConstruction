@@ -1,0 +1,26 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  ENV['ANSIBLE_ROLES_PATH'] = "../../ansible/roles"
+  config.vm.box = "centos/7"
+
+  (1..3).each do |cnt|
+    config.vm.define "rabbitmq#{cnt}" do |server|
+      server.vm.hostname = "rabbitmq#{cnt}.local"
+      server.vm.synced_folder ".", "/vagrant", disabled: true
+      server.vm.network :forwarded_port, id: "ssh", guest: 22, host: "222#{cnt}"
+      server.vm.network :forwarded_port, id: "rabbitmq-management", guest: 15672, host: "#{cnt}5672"
+      server.vm.network :private_network, ip: "192.168.22.1#{cnt}"
+      server.vm.network :private_network, ip: "192.168.1.1#{cnt}", virtualbox__intnet: "test_net1"
+
+      if cnt == 3
+        config.vm.provision "ansible" do |ansible|
+         ansible.playbook = "../../ansible/playbooks/rabbitmq_cluster.yml"
+         ansible.inventory_path = "../../ansible/inventory/hostlist"
+         ansible.limit = 'rabbitmq_cluster'
+        end
+      end
+    end
+  end
+end

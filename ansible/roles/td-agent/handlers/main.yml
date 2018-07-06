@@ -1,0 +1,15 @@
+---
+
+- name: restart td-agent
+  service:
+    name: td-agent
+    state: restarted
+    enabled: yes
+  become: true
+
+- name: restart rsyslog
+  service:
+    name: rsyslog
+    state: restarted
+    enabled: yes
+  become: true

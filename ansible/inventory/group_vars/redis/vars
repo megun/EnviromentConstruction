@@ -1,0 +1,8 @@
+---
+
+redis:
+  version: 4.0.9
+  master:
+    name: demomaster
+    ipaddress: 192.168.22.11
+    port: 6379

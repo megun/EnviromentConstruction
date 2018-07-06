@@ -1,0 +1,15 @@
+---
+
+- name: fix somaxconn
+  sysctl:
+    name: net.core.somaxconn
+    value: 12800
+    state: present
+  become: true
+
+- name: fix overcommit_memory
+  sysctl:
+    name: vm.overcommit_memory
+    value: 1
+    state: present
+  become: true

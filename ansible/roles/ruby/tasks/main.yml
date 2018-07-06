@@ -1,0 +1,68 @@
+---
+
+- name: install package
+  yum:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - git
+    - gcc
+    - gcc-c++
+    - openssl-devel
+    - zlib-devel
+    - readline-devel
+  become: true
+
+- name: install rbenv
+  git:
+    repo: https://github.com/sstephenson/rbenv.git
+    dest: /usr/local/rbenv
+    version: master
+  become: true
+
+- name: install ruby_build
+  git:
+    repo: https://github.com/sstephenson/ruby-build.git
+    dest: /usr/local/rbenv/plugins/ruby-build
+    version: master
+  become: true
+
+- name: install rbenv-default-gems
+  git:
+    repo: https://github.com/sstephenson/rbenv-default-gems.git
+    dest: /usr/local/rbenv/plugins/rbenv-default-gems
+    version: master
+  become: true
+
+- name: set rbenv-default-gems
+  copy:
+    src: usr/local/rbenv/default-gems
+    dest: /usr/local/rbenv/default-gems
+  become: true
+
+- name: profile setinng
+  copy:
+    src: etc/profile.d/rbenv.sh
+    dest: /etc/profile.d/rbenv.sh
+  become: true
+
+- name: ruby check
+  shell: bash -lc "rbenv versions | grep "{{ ruby_ver }}""
+  register: ruby_check
+  failed_when: ruby_check.rc not in [0, 1]
+  check_mode: false
+  become: true
+
+- name: ruby install
+  shell: bash -lc "rbenv install "{{ ruby_ver }}""
+  become: true
+  when: ruby_check.rc == 1
+
+- name: ruby set global
+  shell: bash -lc "rbenv global "{{ ruby_ver }}""
+  become: true
+  when: ruby_check.rc == 1
+
+- name: rubygems update
+  shell: bash -lc "gem update --system"
+  become: true

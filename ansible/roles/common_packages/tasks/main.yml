@@ -1,0 +1,23 @@
+---
+
+- name: set timezone to Asia/Tokyo
+  timezone:
+    name: Asia/Tokyo
+  become: true
+
+- name: install common packages
+  yum:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+    - git
+    - dstat
+    - tcpdump
+    - sysstat
+    - iotop
+    - tree
+    - tmux
+    - policycoreutils-python
+    - bind-utils
+    - net-tools
+  become: true

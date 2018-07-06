@@ -1,0 +1,36 @@
+---
+
+- name: nginx log settings
+  block:
+    - name: copy td-agent config file for nginx
+      template:
+        src: etc/td-agent/config.d/nginx.conf.j2
+        dest: /etc/td-agent/config.d/nginx.conf
+      notify: restart td-agent
+      become: true
+    - name: create nginx log directory
+      file:
+        path: /var/log/nginx
+        state: directory
+      become: true
+    - name: change permission nginx log files
+      file:
+        path: "{{ item }}"
+        owner: nginx
+        group: td-agent
+        mode: 0640
+        state: touch
+      with_items:
+        - /var/log/nginx/access.log
+        - /var/log/nginx/error.log
+      become: true
+    - stat:
+        path: /etc/logrotate.d/nginx
+      register: logrotate_nginx
+    - name: change nginx logrote file
+      lineinfile:
+        path: /etc/logrotate.d/nginx
+        regexp: 'create '
+        line: 'create 640 nginx td-agent'
+      become: true
+      when: logrotate_nginx.stat.islnk is defined

@@ -1,0 +1,8 @@
+---
+
+- import_playbook: common.yml
+
+- hosts: redis
+  roles:
+    - { role: redis, tags: [ 'redis' ] }
+    - { role: redis_sentinel, tags: [ 'redis_sentinel' ] }

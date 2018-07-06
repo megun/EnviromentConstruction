@@ -1,0 +1,128 @@
+---
+
+- name: install requirement modules for selinux
+  yum:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+    - libselinux-python
+    - libsemanage-python
+  become: true
+
+- name: install zabbix repository
+  yum:
+    name: http://repo.zabbix.com/zabbix/3.0/rhel/7/x86_64/zabbix-release-3.0-1.el7.noarch.rpm
+  become: true
+
+- name: install zabbix-server
+  yum:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+    - "zabbix-server-mysql"
+    - "zabbix-web-mysql"
+  register: install_zabbix_server
+  become: true
+
+#create database zabbix character set utf8 collate utf8_bin;
+- name: setup database
+  mysql_db:
+    db: zabbix
+    encoding: utf8
+    collation: utf8_bin
+    state: present
+    login_user: 'root'
+    login_password: '{{ mariadb_root_password }}'
+
+#grant all privileges on zabbix.* to zabbix@localhost identified by '<password>';
+- name: create zabbix user
+  mysql_user:
+    name: zabbix
+    host: localhost
+    password: '{{ mariadb_zabbix_password }}'
+    priv: 'zabbix.*:ALL'
+    login_user: 'root'
+    login_password: '{{ mariadb_root_password }}'
+
+#zcat /usr/share/doc/zabbix-server-mysql-3.0.*/create.sql.gz | mysql -uzabbix -p zabbix
+- name: import initial schema and data
+  mysql_db:
+    name: zabbix
+    state: import
+    target: "/usr/share/doc/zabbix-server-mysql-3.0.14/create.sql.gz"
+    login_user: 'zabbix'
+    login_password: '{{ mariadb_zabbix_password }}'
+  when:
+    - install_zabbix_server.changed == true
+
+- name: copy zabbix config file
+  template:
+    src: etc/zabbix/zabbix_server.conf.j2
+    dest: /etc/zabbix/zabbix_server.conf
+    mode: 0640
+    owner: root
+    group: zabbix
+  become: true
+
+- name: setsebool -P item on
+  seboolean:
+    name: "{{ item }}"
+    state: yes
+    persistent: yes
+  with_items:
+    - httpd_can_connect_zabbix
+    - zabbix_can_network
+  become: true
+
+- name: check semodule zabbix_setrlimit
+  shell: semodule -l | grep zabbix_setrlimit
+  register: selinux_zabbix_setrlimit
+  failed_when: false
+
+- name: copy selinux policy
+  copy:
+    src: tmp/zabbix_setrlimit.te
+    dest: /tmp/zabbix_setrlimit.te
+  when:
+    - selinux_zabbix_setrlimit.rc == 1
+
+- name: make module of selinux policy
+  shell: /bin/checkmodule -M -m -o /tmp/zabbix_setrlimit.mod /tmp/zabbix_setrlimit.te
+  register: mkmodule_zabbix_setrlimit
+  when:
+    - selinux_zabbix_setrlimit.rc == 1
+
+- name: make package of selinux policy
+  shell: /bin/semodule_package -o /tmp/zabbix_setrlimit.pp -m /tmp/zabbix_setrlimit.mod
+  register: mkpackage_zabbix_setrlimit
+  when:
+    - mkmodule_zabbix_setrlimit.changed == true
+
+- name: install package of selinux policy
+  shell: /sbin/semodule -i /tmp/zabbix_setrlimit.pp
+  when:
+    - mkpackage_zabbix_setrlimit.changed == true
+  become: true
+
+- name: start zabbix server
+  service:
+    name: zabbix-server
+    state: started
+    enabled: yes
+  become: true
+
+- name: copy httpd config file
+  template:
+    src: etc/httpd/conf.d/zabbix.conf.j2
+    dest: /etc/httpd/conf.d/zabbix.conf
+    mode: 0644
+    owner: root
+    group: root
+  become: true
+
+- name: start httpd server
+  service:
+    name: httpd
+    state: started
+    enabled: yes
+  become: true

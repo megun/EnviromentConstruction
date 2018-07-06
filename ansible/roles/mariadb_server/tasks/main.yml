@@ -1,0 +1,71 @@
+---
+
+- name: copy mariadb repository
+  copy:
+    src: etc/yum.repos.d/mariadb.repo
+    dest: /etc/yum.repos.d/mariadb.repo
+  become: true
+
+- name: install mariadb server
+  yum:
+    name: '{{ item }}'
+    state: installed
+  with_items:
+    - "MariaDB-server"
+    - "MariaDB-client"
+    - "MySQL-python"
+  register: install_mariadb
+  become: true
+
+- name: start mariadb server
+  service:
+    name: mysql
+    state: started
+  register: start_mariadb
+  become: true
+
+#DELETE FROM mysql.user WHERE User='';
+- name: remove anonymous user
+  mysql_user:
+    name: ''
+    host_all: yes
+    state: absent
+    login_user: 'root'
+    login_password: ''
+  when:
+    - install_mariadb.changed == true
+    - start_mariadb.changed == true
+
+#DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
+- name: disallow root login remotely
+  shell: mysql -uroot -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
+  when:
+    - install_mariadb.changed == true
+    - start_mariadb.changed == true
+
+#DROP DATABASE IF EXISTS test;
+- name: remove test database and access
+  mysql_db:
+    db: test
+    state: absent
+    login_user: 'root'
+    login_password: ''
+  when:
+    - install_mariadb.changed == true
+    - start_mariadb.changed == true
+
+#UPDATE mysql.user SET Password=PASSWORD('$esc_pass') WHERE User='root';
+- name: change root password
+  mysql_user:
+    name: 'root'
+    host: '{{ item }}'
+    password: '{{ mariadb_root_password }}'
+    login_user: 'root'
+    login_password: ''
+  with_items:
+    - 127.0.0.1
+    - ::1
+    - localhost
+  when:
+    - install_mariadb.changed == true
+    - start_mariadb.changed == true

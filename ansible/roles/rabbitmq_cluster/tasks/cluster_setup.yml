@@ -1,0 +1,58 @@
+---
+
+- name: get erlang.cookie of first node
+  shell: cat /var/lib/rabbitmq/.erlang.cookie
+  register: erlang_cookie
+  when: ansible_hostname == groups['rabbitmq_cluster'][0]
+  check_mode: false
+  become: true
+
+- name: set authority for erlang.cookie
+  file:
+    path: /var/lib/rabbitmq/.erlang.cookie
+    owner: rabbitmq
+    group: rabbitmq
+    mode: 0400
+  become: true
+
+- name: set cookie for othre nodes
+  copy:
+    content: "{{ hostvars[groups['rabbitmq_cluster'][0]]['erlang_cookie']['stdout'] }}"
+    dest: /var/lib/rabbitmq/.erlang.cookie
+    owner: rabbitmq
+    group: rabbitmq
+    mode: 0400
+  when: ansible_hostname != groups['rabbitmq_cluster'][0]
+  register: erlang_cookie_changed
+  become: true
+
+- name: start rabbitmq-server
+  service:
+    name: rabbitmq-server
+    state: started
+    enabled: yes
+  become: true
+
+- name: stop application if changed cookie values
+  shell: rabbitmqctl stop_app
+  when: erlang_cookie_changed.changed == true
+  check_mode: false
+  become: true
+
+- name: reset cluster if changed cookie values
+  shell: rabbitmqctl reset
+  when: erlang_cookie_changed.changed == true
+  check_mode: false
+  become: true
+
+- name: join cluster
+  shell: rabbitmqctl join_cluster rabbit@'{{ groups['rabbitmq_cluster'][0] }}'
+  when: erlang_cookie_changed.changed == true
+  check_mode: false
+  become: true
+
+- name: start application if changed cookie values
+  shell: rabbitmqctl start_app
+  when: erlang_cookie_changed.changed == true
+  check_mode: false
+  become: true

@@ -1,0 +1,97 @@
+---
+
+- name: permissive selinux
+  selinux:
+    policy: targeted
+    state: permissive
+  become: true
+
+- name: install MySQL-python
+  yum:
+    name: MySQL-python
+    state: present
+  become: true
+
+- name: install percona repository
+  yum:
+    name: http://www.percona.com/downloads/percona-release/redhat/0.1-4/percona-release-0.1-4.noarch.rpm
+    state: present
+  become: true
+
+- name: install percona cluster
+  yum:
+    name: Percona-XtraDB-Cluster-full-57
+    state: present
+  register: install_percona_cluster
+  become: true
+
+- name: copy my.cnf
+  template:
+    src: etc/my.cnf.j2
+    dest: /etc/my.cnf
+    owner: root
+    group: root
+    mode: 0644
+  register: change_mycnf
+  notify: restart mysql
+  become: true
+
+- name: start first node
+  service:
+    name: mysql@bootstrap
+    state: started
+  when:
+    - install_percona_cluster.changed == true
+    - ansible_hostname == groups['percona_cluster'][0]
+  become: true
+
+- name: get initial password
+  shell: grep 'temporary password' /var/log/mysqld.log | grep -v grep | awk '{print $NF}'
+  register: get_initial_password
+  when:
+    - install_percona_cluster.changed == true
+    - ansible_hostname == groups['percona_cluster'][0]
+  become: true
+
+- name: change root password
+  shell: mysql --connect-expired-password -uroot -p'{{ get_initial_password.stdout }}' -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ percona.rootpass }}';"
+  when:
+    - install_percona_cluster.changed == true
+    - ansible_hostname == groups['percona_cluster'][0]
+
+- name: create sstuser
+  mysql_user:
+    name: "{{ percona.sstuser }}"
+    password: "{{ percona.sstpass }}"
+    priv: '*.*:RELOAD,LOCK TABLES,PROCESS,REPLICATION CLIENT'
+    host: localhost
+    login_user: root
+    login_password: "{{ percona.rootpass }}"
+  when:
+    - install_percona_cluster.changed == true
+    - ansible_hostname == groups['percona_cluster'][0]
+
+- name: start second and third node
+  service:
+    name: mysql
+    state: started
+    enabled: yes
+  when:
+    ansible_hostname == groups['percona_cluster'][1] or
+    ansible_hostname == groups['percona_cluster'][2]
+  become: true
+
+- name: stop first node with bootstrap mode
+  service:
+    name: mysql@bootstrap
+    state: stopped
+  become: true
+
+- name: start first node
+  service:
+    name: mysql
+    state: started
+    enabled: yes
+  when:
+    ansible_hostname == groups['percona_cluster'][0]
+  become: true

@@ -1,0 +1,26 @@
+#<source>
+#  @type tail
+#  format syslog
+#  path /var/log/messages
+#  tag blog.system.messages
+#  pos_file /var/log/td-agent/pos/sysname.system.messages.pos
+#</source>
+
+<source>
+  @type syslog
+  port 5140
+  protocol_type tcp
+  bind 127.0.0.1
+  priority_key priority
+  facility_key facility
+  tag syslog
+</source>
+
+<match syslog.**>
+  @type record_reformer
+  tag sysname.system.syslog
+  <record>
+    full-hostname ${hostname}
+    tag sysname.system.syslog
+  </record>
+</match>

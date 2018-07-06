@@ -1,0 +1,32 @@
+---
+
+- name: import gpg key of td-agent
+  rpm_key:
+    key: https://packages.treasuredata.com/GPG-KEY-td-agent
+    state: present
+  become: true
+
+- name: install yum repository
+  copy:
+    src: etc/yum.repos.d/td.repo
+    dest: /etc/yum.repos.d/td.repo
+  become: true
+
+- name: install td-agent
+  yum:
+    name: td-agent
+    state: present
+  become: true
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: install td-agent plugin
+  gem:
+    executable: /sbin/td-agent-gem
+    name: "{{ item }}"
+    state: present
+    user_install: no
+  with_items:
+    - fluent-plugin-forest
+    - fluent-plugin-record-reformer
+  become: true
+  ignore_errors: "{{ ansible_check_mode }}"

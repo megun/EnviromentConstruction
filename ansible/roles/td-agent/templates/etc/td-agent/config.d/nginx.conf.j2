@@ -1,0 +1,15 @@
+<source>
+  @type tail
+  format ltsv
+  path /var/log/nginx/access.log
+  pos_file /var/log/td-agent/pos/sysname.nginx.accesslog.pos
+  tag sysname.nginx.accesslog
+</source>
+
+<source>
+  @type tail
+  format /^(?<time>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}) \[(?<log_level>\w+)\] (?<pid>\d+).(?<tid>\d+): (?<message>.*)$/
+  path /var/log/nginx/error.log
+  pos_file /var/log/td-agent/pos/sysname.nginx.errorlog.pos
+  tag sysname.nginx.errorlog
+</source>

@@ -1,0 +1,11 @@
+---
+
+fluent:
+  aggregaters:
+    primary_name: logserver1
+    primary_ip: 192.168.22.11
+    standby_name: logserver2
+    standby_ip: 192.168.22.12
+
+flunet_nginx: true
+flunet_syslog: true

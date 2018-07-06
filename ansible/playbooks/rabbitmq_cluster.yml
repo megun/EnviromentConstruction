@@ -1,0 +1,8 @@
+---
+
+- import_playbook: common.yml
+
+- hosts: rabbitmq_cluster
+  roles:
+    - { role: ruby, tags: [ 'ruby' ] }
+    - { role: rabbitmq_cluster, tags: [ 'rabbitmq_cluster' ] }

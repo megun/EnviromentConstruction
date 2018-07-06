@@ -1,0 +1,51 @@
+@include config.d/*.conf
+
+<system>
+  log_level info
+  <log>
+    time_format %Y-%m-%dT%H:%M:%S.%L
+  </log>
+</system>
+
+<filter **>
+  @type record_transformer
+  <record>
+    full-hostname ${hostname}
+    tag ${tag}
+  </record>
+</filter>
+
+<match fluent.**>
+  @type null
+</match>
+
+<match **>
+  @type forward
+  send_timeout 60s
+  recover_wait 10s
+  hard_timeout 60s
+#  transport tls
+
+  <buffer tag>
+    flush_interval 1
+  </buffer>
+
+  <server>
+    name {{ fluent.aggregaters.primary_name }}
+    host {{ fluent.aggregaters.primary_ip }}
+    port 24224
+    weight 60
+  </server>
+  <server>
+    name {{ fluent.aggregaters.standby_name }}
+    host {{ fluent.aggregaters.standby_ip }}
+    port 24224
+    weight 60
+#    standby
+  </server>
+
+  <secondary>
+    @type file
+    path /var/log/td-agent/forward-failed
+  </secondary>
+</match>

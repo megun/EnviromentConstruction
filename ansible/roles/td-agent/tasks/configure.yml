@@ -1,0 +1,59 @@
+---
+
+- name: disable selinux
+  selinux:
+    state: disabled
+  become:  true
+  tags: selinux
+
+- name: copy td-agent.conf file for logserver
+  template:
+    src: etc/td-agent/td-agent.conf.aggregate.j2
+    dest: /etc/td-agent/td-agent.conf
+  become: true
+  notify: restart td-agent
+  when: "'logserver' in group_names"
+
+- name: copy td-agent.conf file for logclinet
+  template:
+    src: etc/td-agent/td-agent.conf.j2
+    dest: /etc/td-agent/td-agent.conf
+  become: true
+  notify: restart td-agent
+  when: "'logclient' in group_names"
+
+- name: create directry
+  file:
+    path: "{{ item.path }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+    state: directory
+  with_items:
+    - { path: "/etc/td-agent/config.d", owner: "root", group: "root", mode: "0755" }
+    - { path: "/var/log/td-agent/pos", owner: "td-agent", group: "td-agent", mode: "0755" }
+    - { path: "/var/log/td-agent/forward-failed", owner: "td-agent", group: "td-agent", mode: "0755" }
+  become: true
+
+- name: create directry of logserver
+  file:
+    path: "{{ item.path }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+    state: directory
+  with_items:
+    - { path: "/var/log/td-agent/aggregate/sysname/system", owner: "td-agent", group: "td-agent", mode: "0755" }
+    - { path: "/var/log/td-agent/aggregate/sysname/nginx", owner: "td-agent", group: "td-agent", mode: "0755" }
+  when: "'logserver' in group_names"
+  become: true
+
+- name: register crontab delete old logs
+  cron:
+    name: "delete logs that exceeded retention period"
+    minute: "0"
+    hour: "2"
+    job: "/bin/find /var/log/td-agent/aggregate -type f -mtime +{{ fluent.log_retention_period }} -delete"
+    user: td-agent
+  become: true
+  when: "'logserver' in group_names"

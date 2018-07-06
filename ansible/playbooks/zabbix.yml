@@ -1,0 +1,11 @@
+---
+
+- import_playbook: common.yml
+
+- hosts: zabbix_server
+  roles:
+#    - { role: debugrole, tags: [ 'debug' ] }
+    - { role: python, tags: [ 'python' ] }
+    - { role: mariadb_server, tags: [ 'maridb_server' ] }
+    - { role: zabbix_server, tags: [ 'zabbix_server' ] }
+    - { role: zabbix_agent, tags: [ 'zabbix_agent' ] }

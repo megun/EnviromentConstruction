@@ -1,0 +1,31 @@
+---
+
+- name: add mangement user
+  rabbitmq_user:
+    user: "{{ rabbitmq.admin_users.name }}"
+    password: "{{ rabbitmq.admin_users.pass }}"
+    vhost: "{{ item }}"
+    configure_priv: "{{ rabbitmq.admin_users.configure_priv }}"
+    write_priv: "{{ rabbitmq.admin_users.write_priv }}"
+    read_priv: "{{ rabbitmq.admin_users.read_priv }}"
+    tags: "{{ rabbitmq.admin_users.tags }}"
+    state: present
+  with_items:
+    - "{{ rabbitmq.vhosts }}"
+  become: true
+  run_once: true
+
+- name: add normal user
+  rabbitmq_user:
+    user: "{{ item.name }}"
+    password: "{{ item.pass }}"
+    vhost: "{{ item.vhosts }}"
+    configure_priv: "{{ item.configure_priv }}"
+    write_priv: "{{ item.write_priv }}"
+    read_priv: "{{ rabbitmq.admin_users.read_priv }}"
+    tags: "{{ item.tags }}"
+    state: present
+  with_items:
+    - "{{ rabbitmq.users }}"
+  become: true
+  run_once: true

@@ -1,0 +1,23 @@
+---
+
+- name: setup hosts
+  blockinfile:
+    path: /etc/hosts
+    block: |
+      {% for item in rabbitmq.cluster_servers %}
+      {{ item.ipaddress }} {{ item.name }}
+      {% endfor %}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK RabbitMQ Cluster Hosts"
+  become: true
+
+- name: make systemd directory of RabbitMQ
+  file:
+    path: /etc/systemd/system/rabbitmq-server.service.d
+    state: directory
+  become: true
+
+- name: copy limits conf
+  copy:
+    src: etc/systemd/system/rabbitmq-server.service.d/limits.conf
+    dest: /etc/systemd/system/rabbitmq-server.service.d/limits.conf
+  become: true

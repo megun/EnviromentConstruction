@@ -1,0 +1,55 @@
+---
+
+- name: install epel repository
+  yum:
+    name: epel-release
+    state: latest
+  become: true
+
+- name: install packages
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - gcc
+    - jemalloc-devel
+    - tcl
+  become: true
+
+- name: make compile directroy
+  file:
+    path: /usr/local/src/redis
+    mode: 0777
+    state: directory
+  become: true
+
+- name: redis version check
+  shell: bash -lc "redis-server --version | grep ' v={{ redis.version }} '"
+  register: redis_check
+  failed_when: redis_check.rc not in [0, 1, 2]
+  check_mode: false
+
+- name: redis code download & unarchive
+  unarchive:
+    src: http://download.redis.io/releases/redis-{{ redis.version }}.tar.gz
+    dest: /usr/local/src/redis
+    remote_src: yes
+  when: redis_check.rc != 0
+
+- name: build redis
+  make:
+    chdir: /usr/local/src/redis/redis-{{ redis.version }}
+  when: redis_check.rc != 0
+
+#- name: build test redis
+#  make:
+#    chdir: /usr/local/src/redis/redis-{{ redis.version }}
+#    target: test
+#  when: redis_check.rc != 0
+
+- name: install redis
+  make:
+    chdir: /usr/local/src/redis/redis-{{ redis.version }}
+    target: install
+  become: true
+  when: redis_check.rc != 0

@@ -1,0 +1,7 @@
+---
+
+- import_playbook: common.yml
+
+- hosts: percona_cluster
+  roles:
+    - { role: percona_cluster, tags: [ 'percona_cluster' ] }

@@ -1,0 +1,31 @@
+---
+
+- name: install python
+  yum:
+    name: python
+    state: present
+  become:  true
+
+- name: check pip
+  shell: which pip
+  changed_when: false
+  register: install_pip
+  ignore_errors: true
+
+- name: download pip
+  get_url:
+    url: https://bootstrap.pypa.io/get-pip.py
+    dest: /tmp/get-pip.py
+  when: install_pip.rc != 0
+  register: download_pip
+
+- name: install pip
+  shell: python /tmp/get-pip.py
+  when: download_pip.changed == true
+  become:  true
+
+- name: install pexpect
+  pip:
+    name: pexpect
+    state: present
+  become:  true

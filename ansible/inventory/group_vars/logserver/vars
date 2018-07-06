@@ -1,0 +1,4 @@
+---
+
+fluent:
+  log_retention_period: 90

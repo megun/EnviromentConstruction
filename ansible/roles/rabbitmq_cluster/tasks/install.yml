@@ -1,0 +1,27 @@
+---
+
+- name: Importing the signing key for RabbitMQ
+  rpm_key:
+    state: present
+    key: https://www.rabbitmq.com/rabbitmq-release-signing-key.asc
+  become: true
+
+- name: Install repository of erlang
+  copy:
+    src: etc/yum.repos.d/rabbitmq-erlang.repo
+    dest: /etc/yum.repos.d/rabbitmq-erlang.repo
+  become: true
+
+- name: Install Erlang
+  yum:
+    name: erlang-20.2.3-1.el7.centos
+    state: present
+  become: true
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Install RabbitMQ
+  yum:
+    name: https://dl.bintray.com/rabbitmq/all/rabbitmq-server/3.7.4/rabbitmq-server-3.7.4-1.el7.noarch.rpm
+    state: present
+  become: true
+  ignore_errors: "{{ ansible_check_mode }}"

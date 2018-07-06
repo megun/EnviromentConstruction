@@ -1,0 +1,10 @@
+---
+
+- name: create os user
+  user:
+    name: redis
+    comment: "Redis Database Server"
+    home: /var/lib/redis
+    createhome: no
+    shell: /sbin/nologin
+  become: true

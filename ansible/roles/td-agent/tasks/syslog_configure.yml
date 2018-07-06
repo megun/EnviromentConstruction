@@ -1,0 +1,17 @@
+---
+
+- name: syslog log settings
+  block:
+    - name: copy td-agent config file for syslog
+      template:
+        src: etc/td-agent/config.d/syslog.conf.j2
+        dest: /etc/td-agent/config.d/syslog.conf
+      notify: restart td-agent
+      become: true
+    - name: syslog forward setting
+      blockinfile:
+        path: /etc/rsyslog.conf
+        block: |
+          *.* @@127.0.0.1:5140
+      become: true
+      notify: restart rsyslog

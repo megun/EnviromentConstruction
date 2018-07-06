@@ -1,0 +1,48 @@
+---
+
+- name: create directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: redis
+    group: redis
+  with_items:
+    - /etc/redis
+    - /var/log/redis
+    - /var/lib/redis
+  become: true
+
+- name: copy redis-sentinel.conf
+  template:
+    src: etc/redis/redis-sentinel.conf
+    dest: /etc/redis/redis-sentinel.conf
+    owner: redis
+    group: redis
+  become: true
+
+- name: copy systemd config file
+  template:
+    src: etc/systemd/system/redis-sentinel.service
+    dest: /etc/systemd/system/redis-sentinel.service
+  register: copy_systemd_redis_config
+  become: true
+
+- name: systemd daemon-reload
+  systemd:
+    daemon_reload: yes
+  become: true
+  when: copy_systemd_redis_config.changed == true
+
+- name: copy redis shutdown script
+  template:
+    src: usr/local/bin/redis-shutdown
+    dest: /usr/local/bin/redis-shutdown
+    mode: 0755
+  become: true
+
+- name: copy redis logrotate file
+  template:
+    src: etc/logrotate.d/redis
+    dest: /etc/logrotate.d/redis
+    mode: 0644
+  become: true

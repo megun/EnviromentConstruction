@@ -1,0 +1,3 @@
+*.retry
+logs/*
+.vault_pass.txt

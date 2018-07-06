@@ -1,0 +1,5 @@
+---
+
+mariadb_root_password: "password"
+mariadb_zabbix_password: "password"
+zabbix_db_hostname: "localhost"

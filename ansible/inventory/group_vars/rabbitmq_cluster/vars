@@ -1,0 +1,31 @@
+---
+
+rabbitmq:
+  cluster_servers:
+  - name: rabbitmq1
+    ipaddress: 192.168.1.11
+  - name: rabbitmq2
+    ipaddress: 192.168.1.12
+  - name: rabbitmq3
+    ipaddress: 192.168.1.13
+
+  vhosts:
+    - /
+    - app1
+
+  admin_users:
+    name: admin
+    pass: "{{ rabbitmq_vault.admin_pass }}"
+    tags: administrator
+    configure_priv: '.*'
+    write_priv: '.*'
+    read_priv: '.*'
+
+  users:
+    - name: user1
+      pass: "{{ rabbitmq_vault.user1_pass }}"
+      vhosts: app1
+      tags:
+      configure_priv: '.*'
+      write_priv: '.*'
+      read_priv: '.*'

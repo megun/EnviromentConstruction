@@ -1,0 +1,11 @@
+---
+
+- import_playbook: common.yml
+
+- hosts: logserver
+  roles:
+    - { role: td-agent, tags: [ 'td-agent' ] }
+
+- hosts: logclient
+  roles:
+    - { role: td-agent, tags: [ 'td-agent' ] }

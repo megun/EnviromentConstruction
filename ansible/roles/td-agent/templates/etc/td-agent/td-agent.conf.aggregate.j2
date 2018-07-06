@@ -1,0 +1,41 @@
+@include config.d/*.conf
+
+<system>
+  log_level info
+  <log>
+    time_format %Y-%m-%dT%H:%M:%S.%L
+  </log>
+</system>
+
+<source>
+  @type forward
+  port 24224
+  bind 0.0.0.0
+</source>
+
+<match fluent.**>
+  @type null
+</match>
+
+<match **>
+  @type forest
+  subtype file
+  <template>
+    symlink_path /var/log/td-agent/aggregate/${tag_parts[0]}/${tag_parts[1]}/${tag_parts[2]}
+    path /var/log/td-agent/aggregate/${tag[0]}/${tag[1]}/${tag[2]}.%Y%m/%Y%m%d/${tag}
+    time_slice_format %Y%m%d-%H
+    compress gzip
+    <buffer tag,time>
+      @type file
+      path /var/log/td-agent/buffer/${tag}.*.buffer
+      timekey 3600
+      timekey_wait 10m
+      flush_at_shutdown true
+      flush_interval 1h
+      flush_mode interval
+    </buffer>
+    <format>
+      @type json
+    </format>
+  </template>
+</match>
