@@ -1,0 +1,7 @@
+# Elasticserch
+elasticsearch/esdata1
+elasticsearch/esdata2
+
+# Fluent
+fluent/log/*
+!.gitkeep
