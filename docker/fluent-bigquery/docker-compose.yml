@@ -1,0 +1,22 @@
+version: '3'
+services:
+  nginx:
+    build: ./nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - ./nginx/usr/share/nginx/html:/usr/share/nginx/html
+    links:
+      - fluent
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: "localhost:24224"
+        tag: "docker.nginx"
+
+  fluent:
+    build: ./fluent
+    ports:
+      - "24224:24224"
+    volumes:
+      - ./fluent/log:/fluentd/log
