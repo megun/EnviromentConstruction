@@ -1,0 +1,16 @@
+{
+  "rabbitmq": [
+{% for hosts in sensu.rabbitmq %}
+    {
+      "host": "{{ hosts["host"] }}",
+      "port": {{ hosts["port"] }},
+      "vhost": "{{ hosts["vhost"] }}",
+      "user": "{{ hosts["user"] }}",
+      "password": "{{ sensu.rabbitmq_password }}",
+      "heartbeat": {{ hosts["heartbeat"] }},
+      "prefetch": {{ hosts["prefetch"] }}
+    }{% if not loop.last %},{% endif %}
+
+{% endfor %}
+  ]
+}

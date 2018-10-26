@@ -1,0 +1,12 @@
+{
+  "handlers": {
+    "slack": {
+      "type": "pipe",
+      "command": "handler-slack.rb"
+     }
+  },
+  "slack": {
+    "webhook_url": "{{ sensu.slack_webhook_url }}",
+    "icon_url": "https://avatars2.githubusercontent.com/u/10713628"
+  }
+}

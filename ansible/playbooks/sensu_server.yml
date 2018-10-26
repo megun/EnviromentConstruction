@@ -1,0 +1,7 @@
+---
+
+#- import_playbook: common.yml
+
+- hosts: sensu_server
+  roles:
+    - { role: sensu_server, tags: [ 'sensu_server' ] }

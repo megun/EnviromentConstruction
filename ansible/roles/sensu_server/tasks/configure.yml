@@ -1,0 +1,40 @@
+---
+
+- name: set sensu config files
+  template:
+    src: "{{ item }}"
+    dest: "/{{ item }}"
+  with_items:
+    - etc/sensu/conf.d/transport.json
+    - etc/sensu/conf.d/rabbitmq.json
+    - etc/sensu/conf.d/redis.json
+    - etc/sensu/conf.d/api.json
+  notify: restart_sensu
+  become: true
+
+- name: set sensu checks files
+  template:
+    src: "{{ item }}"
+    dest: /etc/sensu/conf.d/checks/
+  with_fileglob:
+    - "../templates/etc/sensu/conf.d/checks/*.json"
+  notify: restart_sensu
+  become: true
+
+- name: set sensu handler files
+  template:
+    src: "{{ item }}"
+    dest: /etc/sensu/conf.d/handlers/
+  with_fileglob:
+    - "../templates/etc/sensu/conf.d/handlers/*.json"
+  notify: restart_sensu
+  become: true
+
+- name: set uchiwa config files
+  template:
+    src: "{{ item }}"
+    dest: "/{{ item }}"
+  with_items:
+    - etc/sensu/uchiwa.json
+  notify: restart_uchiwa
+  become: true

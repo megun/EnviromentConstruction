@@ -1,0 +1,14 @@
+{
+  "redis": {
+    "master": "mymaster",
+    "sentinels": [
+{% for hosts in sensu.redis %}
+      {
+        "host": "{{ hosts["host"] }}",
+        "port": {{ hosts["port"] }}
+      }{% if not loop.last %},{% endif %}
+
+{% endfor %}
+    ]
+  }
+}

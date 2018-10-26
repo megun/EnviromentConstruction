@@ -1,0 +1,24 @@
+---
+
+- name: set sensu repository
+  template:
+    src: etc/yum.repos.d/sensu.repo
+    dest: /etc/yum.repos.d/sensu.repo
+  become: true
+
+- name: install sensu
+  yum: name="{{ item }}" state=installed
+  with_items:
+    - sensu
+    - uchiwa
+  become: true
+
+- name: install sensu plugins
+  gem:
+    executable: /opt/sensu/embedded/bin/gem
+    user_install: no
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - sensu-plugins-cpu-checks
+    - sensu-plugins-slack

@@ -1,0 +1,25 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  ENV['ANSIBLE_ROLES_PATH'] = "../../ansible/roles"
+  config.vm.box = "centos/7"
+
+  (1..3).each do |cnt|
+    config.vm.define "sensu#{cnt}" do |server|
+      server.vm.hostname = "sensu#{cnt}.local"
+      server.vm.synced_folder ".", "/vagrant", disabled: true
+      server.vm.network :forwarded_port, id: "ssh", guest: 22, host: "222#{cnt}"
+      server.vm.network :forwarded_port, id: "Uchiwa", guest: 3000, host: "#{cnt}3000"
+      server.vm.network :private_network, ip: "192.168.22.1#{cnt}"
+
+      if cnt == 3
+        config.vm.provision "ansible" do |ansible|
+         ansible.playbook = "../../ansible/playbooks/sensu_server.yml"
+         ansible.inventory_path = "../../ansible/inventory/hostlist"
+         ansible.limit = 'sensu_server'
+        end
+      end
+    end
+  end
+end

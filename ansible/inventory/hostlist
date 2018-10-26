@@ -27,3 +27,8 @@ logserver2
 
 [logclient]
 logclient1
+
+[sensu_server]
+sensu1
+sensu2
+sensu3

@@ -1,0 +1,29 @@
+---
+
+sensu:
+  rabbitmq:
+    - host: 192.168.22.11
+      port: 5672
+      vhost: /sensu
+      user: sensu
+      heartbeat: 30
+      prefetch: 50
+    - host: 192.168.22.12
+      port: 5672
+      vhost: /sensu
+      user: sensu
+      heartbeat: 30
+      prefetch: 50
+    - host: 192.168.22.13
+      port: 5672
+      vhost: /sensu
+      user: sensu
+      heartbeat: 30
+      prefetch: 50
+  redis:
+    - host: 192.168.22.11
+      port: 26379
+    - host: 192.168.22.12
+      port: 26379
+    - host: 192.168.22.13
+      port: 26379

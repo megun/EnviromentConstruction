@@ -1,0 +1,12 @@
+---
+
+- include_tasks: install.yml
+- include_tasks: configure.yml
+
+- name: start sensu
+  service: name="{{ item }}" state=started enabled=yes
+  with_items:
+    - sensu-server
+    - sensu-api
+    - uchiwa
+  become: true
